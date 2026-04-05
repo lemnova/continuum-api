@@ -2,6 +2,7 @@ package tech.lemnova.continuum.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -11,6 +12,8 @@ import tech.lemnova.continuum.controller.dto.note.NoteCreateRequest;
 import tech.lemnova.continuum.controller.dto.note.NoteResponse;
 import tech.lemnova.continuum.controller.dto.note.NoteSummaryDTO;
 import tech.lemnova.continuum.controller.dto.note.NoteUpdateRequest;
+import tech.lemnova.continuum.controller.dto.note.BacklinkDTO;
+import tech.lemnova.continuum.controller.dto.note.CreateNoteLinkRequest;
 import tech.lemnova.continuum.infra.security.CustomUserDetails;
 
 import java.util.Collections;
@@ -62,4 +65,53 @@ public class NoteController {
         noteService.deleteNote(id);
         return ResponseEntity.noContent().build();
     }
+    
+    // ============================================================================
+    // BACKLINKS ENDPOINTS - Links Bidirecionais no Grafo
+    // ============================================================================
+    
+    @GetMapping("/{id}/backlinks")
+    @Operation(summary = "Get backlinks for a note", description = "Retrieves all notes that reference/mention this note (i.e., notas que fazem referência a esta)")
+    public ResponseEntity<List<BacklinkDTO>> getBacklinks(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable String id) {
+        List<BacklinkDTO> backlinks = noteService.getBacklinks(id).stream()
+                .map(BacklinkDTO::fromNote)
+                .toList();
+        return ResponseEntity.ok(backlinks != null ? backlinks : Collections.emptyList());
+    }
+    
+    @GetMapping("/{id}/forward-links")
+    @Operation(summary = "Get forward links for a note", description = "Retrieves all notes that this note references/mentions")
+    public ResponseEntity<List<BacklinkDTO>> getForwardLinks(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable String id) {
+        List<BacklinkDTO> forwardLinks = noteService.getForwardLinks(id).stream()
+                .map(BacklinkDTO::fromNote)
+                .toList();
+        return ResponseEntity.ok(forwardLinks != null ? forwardLinks : Collections.emptyList());
+    }
+    
+    @GetMapping("/{id}/backlink-count")
+    @Operation(summary = "Get backlink count", description = "Returns the number of notes that reference this note")
+    public ResponseEntity<BacklinkCountResponse> getBacklinkCount(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @PathVariable String id) {
+        long count = noteService.getBacklinkCount(id);
+        return ResponseEntity.ok(new BacklinkCountResponse(id, count));
+    }
+    
+    @PostMapping("/links")
+    @Operation(summary = "Create a link between two notes", description = "Creates a bidirectional link between two notes in the knowledge graph")
+    public ResponseEntity<Void> createNoteLink(
+            @AuthenticationPrincipal CustomUserDetails user,
+            @Valid @RequestBody CreateNoteLinkRequest req) {
+        noteService.createNoteLink(req.sourceNoteId(), req.targetNoteId(), req.linkType(), req.context());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+    
+    /**
+     * Response object para retornar a contagem de backlinks
+     */
+    public record BacklinkCountResponse(String noteId, long count) {}
 }

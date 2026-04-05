@@ -9,6 +9,12 @@ import tech.lemnova.continuum.domain.entity.EntityType;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repository para entidades com suporte a Text Search otimizado.
+ * 
+ * Índices de texto:
+ * - { "title": "text", "userId": 1 } para busca otimizada
+ */
 @Repository
 public interface EntityRepository extends MongoRepository<Entity, String> {
     List<Entity> findByUserId(String userId);
@@ -27,4 +33,23 @@ public interface EntityRepository extends MongoRepository<Entity, String> {
      */
     @Query(value = "{ 'userId': ?0 }", fields = "{ 'id': 1, 'title': 1 }")
     List<Entity> findGraphDataByUserId(String userId);
+    
+    /**
+     * Busca entidades por texto usando MongoDB Text Search.
+     * MUCH mais rápido do que Java Streams filter para datasets grandes.
+     * 
+     * Usa índice: { "title": "text", "userId": 1 }
+     * 
+     * @param userId ID do usuário (filtro de segurança)
+     * @param query Texto para procurar (suporta múltiplas palavras e operadores)
+     * @return Lista de entidades que correspondem à query
+     */
+    @Query(value = """
+        {
+            $text: { $search: ?1 },
+            userId: ?0
+        }
+        """, fields = "{ score: { $meta: 'textScore' } }")
+    List<Entity> findByTextSearch(String userId, String query);
 }
+

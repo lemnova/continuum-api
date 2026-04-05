@@ -54,7 +54,7 @@ public class EntityController {
     public ResponseEntity<EntityResponse> getEntity(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable String id) {
-        Entity entity = entityService.getEntity(user.getVaultId(), id);
+        Entity entity = entityService.getEntity(user.getUserId(), user.getVaultId(), id);
         return ResponseEntity.ok(EntityResponse.from(entity));
     }
 
