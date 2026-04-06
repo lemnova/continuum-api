@@ -11,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import tech.lemnova.continuum.application.exception.NotFoundException;
 import tech.lemnova.continuum.application.exception.PlanLimitException;
+import tech.lemnova.continuum.controller.dto.note.BacklinkMentionDTO;
+import tech.lemnova.continuum.controller.dto.note.BacklinksResponse;
 import tech.lemnova.continuum.controller.dto.note.NoteCreateRequest;
 import tech.lemnova.continuum.controller.dto.note.NoteResponse;
 import tech.lemnova.continuum.controller.dto.note.NoteUpdateRequest;
@@ -500,28 +502,49 @@ public class NoteService {
     }
     
     /**
-     * Recupera todos os backlinks de uma nota (notas que mencionam/referenciam esta nota).
+     * Recupera todos os backlinks de uma nota por interseção de entityIds.
      * 
      * @param noteId ID da nota para buscar backlinks
-     * @return Lista de Notas que fazem referência a esta nota
+     * @return Lista de notas que compartilham pelo menos uma entidade com a nota solicitada
      */
-    public List<Note> getBacklinks(String noteId) {
+    public BacklinksResponse getBacklinks(String noteId) {
         String userId = getCurrentUserId();
         String vaultId = getCurrentVaultId();
-        
-        // Validar que a nota existe e pertence ao usuário
-        noteRepo.findById(noteId)
+
+        Note note = noteRepo.findById(noteId)
                 .filter(n -> n.getUserId().equals(userId))
                 .orElseThrow(() -> new NotFoundException("Note not found: " + noteId));
-        
-        // Buscar todos os links que apontam para esta nota
-        List<NoteLink> backlinks = noteLinkRepo.findByTargetNoteIdAndUserIdAndVaultId(noteId, userId, vaultId);
-        
-        // Extrair os IDs das notas source e carregá-las
-        return backlinks.stream()
-                .map(link -> noteRepo.findById(link.getSourceNoteId()).orElse(null))
-                .filter(Objects::nonNull)
+
+        List<String> entityIds = note.getEntityIds();
+        if (entityIds == null || entityIds.isEmpty()) {
+            return new BacklinksResponse(Collections.emptyList(), Collections.emptyList());
+        }
+
+        Set<String> filterIds = new HashSet<>(entityIds);
+
+        List<BacklinkMentionDTO> linkedMentions = noteRepo.findByUserId(userId).stream()
+                .filter(n -> !n.getId().equals(noteId))
+                .filter(n -> n.getEntityIds() != null && n.getEntityIds().stream().anyMatch(filterIds::contains))
+                .map(n -> new BacklinkMentionDTO(n.getId(), n.getTitle(), extractSnippet(n, vaultId)))
                 .collect(Collectors.toList());
+
+        return new BacklinksResponse(linkedMentions, Collections.emptyList());
+    }
+
+    private String extractSnippet(Note note, String vaultId) {
+        String rawContent = note.getContent();
+        if (rawContent == null || rawContent.isBlank()) {
+            rawContent = storageService.loadNoteContent(vaultId, note.getId()).orElse("");
+        }
+        if (rawContent == null || rawContent.isBlank()) {
+            return "";
+        }
+        try {
+            JsonNode contentJson = objectMapper.readTree(rawContent);
+            return tiptapParser.extractPlainText(contentJson);
+        } catch (Exception e) {
+            return "";
+        }
     }
     
     /**

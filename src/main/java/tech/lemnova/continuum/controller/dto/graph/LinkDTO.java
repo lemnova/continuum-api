@@ -1,5 +1,6 @@
 package tech.lemnova.continuum.controller.dto.graph;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import tech.lemnova.continuum.domain.note.LinkType;
 
@@ -11,6 +12,7 @@ import tech.lemnova.continuum.domain.note.LinkType;
  * - Nota A referencia Nota B (type="reference", linkType específico)
  * - Entidade A conecta com Entidade B via nota (type="entity")
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record LinkDTO(
     @JsonProperty("source")
     String source,
@@ -34,13 +36,13 @@ public record LinkDTO(
      * Construtor simples para compatibilidade (sem linkType/context)
      */
     public LinkDTO(String source, String target) {
-        this(source, target, LinkType.RELATED, null, null, null);
+        this(source, target, null, null, null, null);
     }
     
     /**
      * Construtor com tipos
      */
     public LinkDTO(String source, String target, String sourceType, String targetType) {
-        this(source, target, LinkType.RELATED, null, sourceType, targetType);
+        this(source, target, null, null, sourceType, targetType);
     }
 }

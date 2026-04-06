@@ -13,6 +13,7 @@ import tech.lemnova.continuum.controller.dto.note.NoteResponse;
 import tech.lemnova.continuum.controller.dto.note.NoteSummaryDTO;
 import tech.lemnova.continuum.controller.dto.note.NoteUpdateRequest;
 import tech.lemnova.continuum.controller.dto.note.BacklinkDTO;
+import tech.lemnova.continuum.controller.dto.note.BacklinksResponse;
 import tech.lemnova.continuum.controller.dto.note.CreateNoteLinkRequest;
 import tech.lemnova.continuum.infra.security.CustomUserDetails;
 
@@ -71,14 +72,12 @@ public class NoteController {
     // ============================================================================
     
     @GetMapping("/{id}/backlinks")
-    @Operation(summary = "Get backlinks for a note", description = "Retrieves all notes that reference/mention this note (i.e., notas que fazem referência a esta)")
-    public ResponseEntity<List<BacklinkDTO>> getBacklinks(
+    @Operation(summary = "Get backlinks for a note", description = "Retrieves notes that share referenced entities with the requested note")
+    public ResponseEntity<BacklinksResponse> getBacklinks(
             @AuthenticationPrincipal CustomUserDetails user,
             @PathVariable String id) {
-        List<BacklinkDTO> backlinks = noteService.getBacklinks(id).stream()
-                .map(BacklinkDTO::fromNote)
-                .toList();
-        return ResponseEntity.ok(backlinks != null ? backlinks : Collections.emptyList());
+        BacklinksResponse response = noteService.getBacklinks(id);
+        return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{id}/forward-links")
