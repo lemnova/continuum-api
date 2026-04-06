@@ -225,14 +225,6 @@ public class EntityService {
             throw new BadRequestException("Entidade não é um hábito. Tipo: " + entity.getType());
         }
         
-        // Validar se o plano permite criar hábitos (verifica quantidade atual)
-        long currentHabitCount = entityRepo.findByUserId(userId).stream()
-                .filter(e -> e.getType() == EntityType.HABIT)
-                .count();
-        if (!planConfig.canCreateHabit(user.getPlan(), currentHabitCount)) {
-            throw new PlanLimitException("Limite de hábitos atingido para seu plano.");
-        }
-        
         // Adicionar a data atual se ainda não existir (evita duplicata)
         java.time.LocalDate today = java.time.LocalDate.now();
         if (entity.getTrackingDates() == null) {

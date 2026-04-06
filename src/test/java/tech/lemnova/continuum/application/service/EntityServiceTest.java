@@ -9,6 +9,7 @@ import org.mockito.MockitoAnnotations;
 import tech.lemnova.continuum.controller.dto.entity.EntityCreateRequest;
 import tech.lemnova.continuum.controller.dto.entity.EntityUpdateRequest;
 import tech.lemnova.continuum.domain.entity.Entity;
+import tech.lemnova.continuum.domain.entity.EntityType;
 import tech.lemnova.continuum.domain.note.Note;
 import tech.lemnova.continuum.domain.plan.PlanConfiguration;
 import tech.lemnova.continuum.domain.user.User;
@@ -138,6 +139,27 @@ class EntityServiceTest {
         
         assertThat(result.getTitle()).isEqualTo("Updated Title");
         assertThat(result.getDescription()).isEqualTo("Updated Description");
+    }
+
+    @Test
+    @DisplayName("trackHabit: adds today to tracking dates for existing habit")
+    void trackHabit_addsTodayToTrackingDates() {
+        String userId = "user1";
+        String entityId = "e1";
+
+        Entity habit = new Entity();
+        habit.setId(entityId);
+        habit.setUserId(userId);
+        habit.setVaultId("vault1");
+        habit.setType(EntityType.HABIT);
+
+        when(entityRepo.findById(entityId)).thenReturn(Optional.of(habit));
+        when(entityRepo.save(any(Entity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Entity result = entityService.trackHabit(userId, entityId);
+
+        assertThat(result.getTrackingDates()).contains(java.time.LocalDate.now());
+        verify(entityRepo, times(1)).save(habit);
     }
 
     @Test
