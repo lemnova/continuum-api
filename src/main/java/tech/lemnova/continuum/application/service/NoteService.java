@@ -582,3 +582,4 @@ public class NoteService {
         
         return noteLinkRepo.countByTargetNoteIdAndUserIdAndVaultId(noteId, userId, vaultId);
     }
+}
