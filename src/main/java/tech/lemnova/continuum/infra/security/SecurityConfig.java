@@ -89,7 +89,6 @@ public class SecurityConfig {
             .oauth2Login(oauth2 -> oauth2
                 .userInfoEndpoint(userInfo -> userInfo.oidcUserService(oidcUserService))
                 .successHandler(oauth2SuccessHandler)
-                .defaultSuccessUrl(frontendUrl, true) // Redirecionar para o frontend após login
             )
             .addFilterBefore(securityHeadersFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
