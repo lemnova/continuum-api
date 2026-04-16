@@ -164,6 +164,36 @@ public class TrackingService {
                 .orElseThrow(() -> new NotFoundException("User not found"));
     }
 
+    /**
+     * Conta hábitos ativos (que tiveram pelo menos um evento de tracking desde a data especificada)
+     */
+    public long countActiveHabits(String userId, LocalDate since) {
+        User user = getUser(userId);
+        List<TrackingEvent> events = vaultData.readTrackingEvents(user.getVaultId());
+        Set<String> activeEntityIds = events.stream()
+                .filter(e -> !e.getDate().isBefore(since))
+                .map(TrackingEvent::getEntityId)
+                .collect(Collectors.toSet());
+        return activeEntityIds.size();
+    }
+
+    /**
+     * Retorna dados de atividade de hábitos para heatmap (últimos 30 dias)
+     */
+    public Map<String, Integer> getHabitActivityData(String userId, int days) {
+        User user = getUser(userId);
+        List<TrackingEvent> events = vaultData.readTrackingEvents(user.getVaultId());
+        LocalDate end = LocalDate.now();
+        LocalDate start = end.minusDays(days - 1);
+
+        return events.stream()
+                .filter(e -> !e.getDate().isBefore(start) && !e.getDate().isAfter(end))
+                .collect(Collectors.groupingBy(
+                        e -> e.getDate().toString(),
+                        Collectors.summingInt(e -> 1)
+                ));
+    }
+
     public record TrackingStats(
             int currentStreak, int longestStreak,
             double averageValue, double weeklyCompletionRate) {}

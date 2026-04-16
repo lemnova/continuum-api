@@ -11,7 +11,7 @@ import java.util.List;
 
 public record NoteResponse(
     String id, String userId, String folderId, String title, List<String> entityIds, JsonNode content,
-    Instant createdAt, Instant updatedAt
+    String type, Instant createdAt, Instant updatedAt
 ) {
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -20,6 +20,7 @@ public record NoteResponse(
         return new NoteResponse(
             note.getId(), note.getUserId(), null,
             note.getTitle(), note.getEntityIds() != null ? note.getEntityIds() : Collections.emptyList(), contentNode,
+            note.getType(),
             note.getCreatedAt(), note.getUpdatedAt());
     }
 

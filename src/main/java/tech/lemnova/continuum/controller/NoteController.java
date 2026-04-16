@@ -100,6 +100,13 @@ public class NoteController {
         return ResponseEntity.ok(new BacklinkCountResponse(id, count));
     }
     
+    @GetMapping("/types")
+    @Operation(summary = "Get all note types", description = "Retrieves list of all unique types created by the authenticated user")
+    public ResponseEntity<List<String>> getTypes(@AuthenticationPrincipal CustomUserDetails user) {
+        List<String> types = noteService.getDistinctTypes();
+        return ResponseEntity.ok(types);
+    }
+    
     @PostMapping("/links")
     @Operation(summary = "Create a link between two notes", description = "Creates a bidirectional link between two notes in the knowledge graph")
     public ResponseEntity<Void> createNoteLink(

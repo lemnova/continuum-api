@@ -18,7 +18,10 @@ public record NoteCreateRequest(
     @NotBlank(message = "Conteúdo é obrigatório")
     JsonNode content,
     
-    String folderId
+    String folderId,
+    
+    @Size(max = 100, message = "Tipo não pode exceder 100 caracteres")
+    String type
 ) {
     /**
      * Valida o JsonNode de conteúdo.

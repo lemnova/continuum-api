@@ -21,12 +21,16 @@ public class Note {
     @Transient
     private String content;
     private String fileKey;
+    @Indexed
+    private String vaultId;
+    @Indexed
+    private String type;
     private Instant createdAt;
     private Instant updatedAt;
 
     public Note() {}
 
-    public Note(String id, String userId, String entityId, List<String> entityIds, String title, String content, String fileKey, Instant createdAt, Instant updatedAt) {
+    public Note(String id, String userId, String entityId, List<String> entityIds, String title, String content, String fileKey, String vaultId, String type, Instant createdAt, Instant updatedAt) {
         this.id = id;
         this.userId = userId;
         this.entityId = entityId;
@@ -34,6 +38,8 @@ public class Note {
         this.title = title;
         this.content = content;
         this.fileKey = fileKey;
+        this.vaultId = vaultId;
+        this.type = type;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -58,6 +64,12 @@ public class Note {
 
     public String getFileKey() { return fileKey; }
     public void setFileKey(String fileKey) { this.fileKey = fileKey; }
+
+    public String getVaultId() { return vaultId; }
+    public void setVaultId(String vaultId) { this.vaultId = vaultId; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

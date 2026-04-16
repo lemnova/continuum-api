@@ -121,9 +121,11 @@ public class NoteService {
         Note note = new Note();
         note.setId(noteId);
         note.setUserId(userId);
+        note.setVaultId(vaultId);
         note.setTitle(title);
         note.setContent(content);
         note.setFileKey(fileKey);
+        note.setType(req.type());
         note.setEntityIds(entityIds);
         note.setCreatedAt(Instant.now());
         note.setUpdatedAt(Instant.now());
@@ -284,6 +286,11 @@ public class NoteService {
         // Atualizar título se fornecido
         if (req.title() != null && !req.title().isBlank()) {
             note.setTitle(req.title());
+        }
+        
+        // Atualizar tipo se fornecido
+        if (req.type() != null && !req.type().isBlank()) {
+            note.setType(req.type());
         }
         
         note.setContent(newContent);
@@ -590,7 +597,38 @@ public class NoteService {
     /**
      * Retorna a quantidade de backlinks que uma nota possui.
      * Útil para exibir no frontend quantas notas mencionam uma noa específica.
+     *      * Retorna lista de tipos únicos das notas do usuário.
+     * Filtra apenas tipos não-nulos e não-vazios.
      * 
+     * @return Lista de tipos ordenada alfabeticamente
+     */
+    public List<String> getDistinctTypes() {
+        String userId = getCurrentUserId();
+        String vaultId = getCurrentVaultId();
+        List<NoteRepository.TypeProjection> projections = noteRepo.findDistinctTypes(userId, vaultId);
+        return projections.stream()
+                .map(NoteRepository.TypeProjection::getType)
+                .filter(type -> type != null && !type.isBlank())
+                .sorted()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Busca notas por tipo, garantindo que pertencem ao vault do usuário.
+     * 
+     * @param type O tipo das notas a buscar
+     * @return Lista de notas do tipo especificado para o usuário no seu vault
+     */
+    public List<Note> getNotesByType(String type) {
+        String userId = getCurrentUserId();
+        String vaultId = getCurrentVaultId();
+        if (type == null || type.isBlank()) {
+            return Collections.emptyList();
+        }
+        return noteRepo.findByUserIdAndTypeAndVaultId(userId, type, vaultId);
+    }
+
+    /**
      * @param noteId ID da nota
      * @return Quantidade de backlinks
      */

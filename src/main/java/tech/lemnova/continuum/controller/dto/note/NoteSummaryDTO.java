@@ -9,6 +9,7 @@ public record NoteSummaryDTO(
     String id,
     String userId,
     String title,
+    String type,
     List<String> entityIds,
     Instant createdAt,
     Instant updatedAt
@@ -18,6 +19,7 @@ public record NoteSummaryDTO(
             note.getId(),
             note.getUserId(),
             note.getTitle(),
+            note.getType(),
             note.getEntityIds() != null ? note.getEntityIds() : Collections.emptyList(),
             note.getCreatedAt(),
             note.getUpdatedAt()
